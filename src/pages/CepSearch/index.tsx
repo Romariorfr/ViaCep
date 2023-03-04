@@ -1,28 +1,44 @@
+import axios from 'axios';
 import ResultCard from 'components/ResultCard';
 import { useState } from 'react';
 import './styles.css';
 
 type FormData = {
   cep: string;
-  test: string;
+};
+
+type Address = {
+  logradouro: string;
+  localidade: string;
 };
 
 const CepSearch = () => {
+  const [address, setAddress] = useState<Address>();
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name;
     const value = event.target.value;
 
-    setFormData({...formData, [name]:value})
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log(formData);
+
+    axios
+      .get(`https://viacep.com.br/ws/${formData.cep}/json`)
+      .then((response) => {
+        setAddress(response.data);
+        console.log(response.data);
+      })
+      .catch((error) => {
+        setAddress(undefined);
+        console.log(error);
+      });
   };
 
   const [formData, setFormData] = useState<FormData>({
     cep: '',
-    test: '',
   });
 
   return (
@@ -40,22 +56,18 @@ const CepSearch = () => {
               onChange={handleChange}
             />
 
-            <input
-              type="text"
-              name="test"
-              value={formData.test}
-              className="search-input"
-              placeholder="CEP (teste)"
-              onChange={handleChange}
-            />
             <button type="submit" className="btn btn-primary search-button">
               Buscar
             </button>
           </div>
         </form>
 
-        <ResultCard title="Logradouro" description="Lalala" />
-        <ResultCard title="Número" description="234" />
+        {address && (
+          <>
+            <ResultCard title="Logradouro" description={address.logradouro} />
+            <ResultCard title="Número" description={address.localidade} />
+          </>
+        )}
       </div>
     </div>
   );
